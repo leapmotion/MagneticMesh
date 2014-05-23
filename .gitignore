@@ -1,0 +1,10 @@
+.DS_Store
+.DS_Store?
+*.pch
+*.swp
+*.Trashes
+xcuserdata
+build
+*.pbxuser
+*.perspective
+*.perspectivev3
