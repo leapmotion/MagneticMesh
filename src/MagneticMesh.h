@@ -6,10 +6,15 @@
 #include "cinder/Cinder.h"
 #include "cinder/Utilities.h"
 #include "cinder/app/AppBasic.h"
+
+// Audio in Cinder only works with OSX.
+#ifdef __APPLE__
 #include "cinder/audio/Io.h"
 #include "cinder/audio/Output.h"
 #include "cinder/audio/FftProcessor.h"
 #include "cinder/audio/PcmBuffer.h"
+#endif
+
 #include "cinder/Camera.h"
 #include "cinder/CinderResources.h"
 
@@ -44,8 +49,10 @@ private:
   std::vector<cinder::Vec3f> positions_;
   std::vector<cinder::ColorA> colors_;
 
+#ifdef __APPLE__
   cinder::audio::TrackRef track_;
   cinder::audio::PcmBuffer32fRef pcm_buffer_;
+#endif
 };
 
 #endif

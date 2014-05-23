@@ -6,7 +6,7 @@
 #define PINCH_FORCE 200.0f
 
 #define MESH_PARTICLE_WIDTH 200
-#define MESH_PARTICLE_HEIGHT 400
+#define MESH_PARTICLE_HEIGHT 100
 #define MESH_FORCE 0.2f
 #define MESH_PARTICLE_DISTANCE 8
 #define MESH_ALPHA 0.3f
@@ -19,6 +19,8 @@
 
 #define WINDOW_WIDTH 1440
 #define WINDOW_HEIGHT 900
+
+#define DEFAULT_LOUDNESS 5.0f
 
 #define HAND_SCALE 2.0f
 #define HAND_TRANSLATION (Vec3f(0.0f, -400.0f, -100.0f))
@@ -33,8 +35,10 @@ void MagneticMesh::prepareSettings(Settings *settings) {
 }
 
 void MagneticMesh::setup() {
+#ifdef __APPLE__
   track_ = audio::Output::addTrack(audio::load(loadResource(SONG_SOURCE)));
   track_->enablePcmBuffering(true);
+#endif
 
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   gl::enableAdditiveBlending();
@@ -69,23 +73,19 @@ void MagneticMesh::createMesh() {
       indices.push_back((x + 1) * MESH_PARTICLE_HEIGHT + (y + 0));
       indices.push_back((x + 1) * MESH_PARTICLE_HEIGHT + (y + 1));
       indices.push_back((x + 0) * MESH_PARTICLE_HEIGHT + (y + 1));
-      
-      colors_.push_back(ColorA(1, 1, 1, 1));
     }
   }
   
-  for (int x = 0; x < MESH_PARTICLE_HEIGHT; ++x)
-    colors_.push_back(ColorA(1, 1, 1, 1));
-  
   for (int x = 0; x < MESH_PARTICLE_WIDTH; ++x) {
-		for(int y = 0; y < MESH_PARTICLE_HEIGHT; ++y) {
+    for(int y = 0; y < MESH_PARTICLE_HEIGHT; ++y) {
       float x_pos = ((1.0f * x) / MESH_PARTICLE_WIDTH - 0.5f) * MESH_WIDTH;
       float y_pos = ((1.0f * y) / MESH_PARTICLE_HEIGHT - 0.5f) * MESH_HEIGHT;
       Vec3f mesh_position = Vec3f(x_pos, y_pos, 1);
-			positions_.push_back(mesh_position);
+      positions_.push_back(mesh_position);
       velocities_.push_back(Vec3f(0, 0, 0));
-		}
-	}
+      colors_.push_back(ColorA(1, 1, 1, 1));
+    }
+  }
   
   mesh_.bufferIndices(indices);
 }
@@ -94,9 +94,8 @@ void MagneticMesh::updateMesh(pinch_list pinches, float bass_total, float treble
   int i = 0;
   int num_vertices = MESH_PARTICLE_WIDTH * MESH_PARTICLE_HEIGHT;
   
-	for (int x = 0; x < MESH_PARTICLE_WIDTH; ++x) {
-		for (int y = 0; y < MESH_PARTICLE_HEIGHT; ++y) {
-      
+  for (int x = 0; x < MESH_PARTICLE_WIDTH; ++x) {
+    for (int y = 0; y < MESH_PARTICLE_HEIGHT; ++y) {
       // Apply gravitational forces for all the pinches.
       for (int p = 0; p < pinches.size(); ++p) {
         Vec3f delta = pinches[p].first - positions_[i];
@@ -135,11 +134,11 @@ void MagneticMesh::updateMesh(pinch_list pinches, float bass_total, float treble
         colors_[i] = ColorA(treble_total, treble_total, treble_total, 1);
       else
         colors_[i] = ColorA(r, 0.13f + g, 1 - r, MESH_ALPHA);
-      
+
       ++i;
-		}
-	}
-  
+    }
+  }
+
   // Update the mesh positions using the velocities.
   gl::VboMesh::VertexIter iter = mesh_.mapVertexBuffer();
   for (int p = 0; p < num_vertices; ++p) {
@@ -151,10 +150,12 @@ void MagneticMesh::updateMesh(pinch_list pinches, float bass_total, float treble
 }
 
 void MagneticMesh::update() {
-  pcm_buffer_ = track_->getPcmBuffer();
-  
   float bass_total = 0.0f;
   float treble_total = 0.0f;
+
+  // Audio only works in OSX in Cinder.
+#ifdef __APPLE__
+  pcm_buffer_ = track_->getPcmBuffer();
 
   if (pcm_buffer_) {
     std::shared_ptr<float> fft =
@@ -170,9 +171,14 @@ void MagneticMesh::update() {
       }
     }
   }
-  
+    
   bass_total /= (FFT_BANDS / 2);
   treble_total /= (FFT_BANDS / 2);
+#else
+  // If there's no audio, still add a little color.
+  bass_total = DEFAULT_LOUDNESS;
+  treble_total = DEFAULT_LOUDNESS;
+#endif
   
   updateMesh(hand_controller_.getPinches(), bass_total, treble_total);
 }
