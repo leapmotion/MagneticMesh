@@ -9,6 +9,7 @@ build
 *.perspective
 *.perspectivev3
 *.sdf
+*.opensdf
 *.suo
 *.tlog
 *.user
