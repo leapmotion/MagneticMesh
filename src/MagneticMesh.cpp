@@ -6,7 +6,7 @@
 #define PINCH_FORCE 200.0f
 
 #define MESH_PARTICLE_WIDTH 200
-#define MESH_PARTICLE_HEIGHT 100
+#define MESH_PARTICLE_HEIGHT 400
 #define MESH_FORCE 0.2f
 #define MESH_PARTICLE_DISTANCE 8
 #define MESH_ALPHA 0.3f
@@ -47,6 +47,7 @@ void MagneticMesh::setup() {
   // Setup hand transformation.
   hand_controller_.setScale(HAND_SCALE);
   hand_controller_.setTranslation(HAND_TRANSLATION);
+  hideCursor();
 }
 
 void MagneticMesh::resize() {
